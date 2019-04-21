@@ -1,59 +1,29 @@
-# Cache simulator IE521 project baseline
+# Cache simulator IE0521 project
 
-Code base line for IE0521 cache simulation project
-
+Code based on the base line that can be found in [here](https://github.com/lsanabri/cache_simulator_IE521_baseline).
 
 ## How to build the project
-Create a build directory and run all targets there
+Build the project from the *src* folder
 ```
->> mkdir build
->> cd build
->> cmake ..
->> make <target> (l1cache or cachetest)
+>> make
 ```
-## How to run the tests
-Go to build and make cachetest. There are several options to run the tests.
-
-1. Run all tests:
+## How to run
+Again, in *src* folder
 ```
-  ./test/cachetest
+>> make run
 ```
-2. Run only one test:
+Or explicit
 ```
-  ./test/cachetest  --gtest_filter=<test_name>
-  Ex: ./test/cachetest  --gtest_filter=L1cache.hit_miss_srrip
-```
-3. Run a test n times:
-```
-./test/cachetest  --gtest_filter=<test_name> --gtest_repeat=<n>
-Ex: ./test/cachetest  --gtest_filter=L1cache.hit_miss_srrip --gtest_repeat=2
-```
-4. Replicate test results:
-```
-  Each test is run with base seed, to replicate the result the same seed must be used
-  ./test/cachetest  --gtest_filter=<test_name> --gtest_random_seed=<test_seed>
-  ./test/cachetest  --gtest_filter=L1cache.hit_miss_srrip --gtest_random_seed=2126
-```  
-To enable further debug on the test you need to enable debug_on variable, on your terminal
-do:
-```
-export TEST_DEBUG=1
-```
-To disable the extra logging, set the  environment variable to zero.
-
-## How to run the simulation
-The simulation executable is located inside the build directory (src/l1cache)
-```
-gunzip -c <trace> | <l1cache executable>  -a <associativity> -mp -s <cache size KB> -l <block size in bytes> -rp <replacement policy>
+>> gunzip -c mcf.trace.gz | ./cache -a <associativity> -t <cache size KB> -l <block size in bytes> -rp <replacement policy>
 ```
 
-### Dependencies
-Make sure gtest is install:
+For example
 ```
-sudo apt-get install libgtest-dev
+>> gunzip -c mcf.trace.gz | ./cache -a 4 -t 16 -l 32 -rp LRU
+```
 
-sudo apt-get install cmake # install cmake
-cd /usr/src/gtest
-sudo cmake CMakeLists.txt
-sudo make
+## To clean
+In *src* folder
+```
+>> make clean
 ```
