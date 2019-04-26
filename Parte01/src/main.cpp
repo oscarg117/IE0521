@@ -7,16 +7,16 @@
 #include <math.h>
 #include "../include/L1cache.h"
 #include "../include/debug_utilities.h"
+
 using namespace std;
 
 
 /* Helper funtions */
 void print_usage ()
 {
-  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <Asociatividad> -rp <PR>" << endl;
+  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <n_way> -rp <PR>" << endl;
   exit (0);
 }
-
 
 /* enum to iostream*/
 std::ostream& operator<<(std::ostream& out, const replacement_policy value){
@@ -39,7 +39,7 @@ int main(int argc, char * argv []) {
   /* From command line */
   int tam_cache_kb = 0;
   int tam_bloque_b = 0;
-  int asociatividad = 0;
+  int n_way = 0;
   replacement_policy rp = RANDOM;
   /* From functions */
   int tam_tag = 0;
@@ -48,15 +48,15 @@ int main(int argc, char * argv []) {
   /* From simulation */
   long long cpu_time = 0;
   int amat = 0;
-  double miss_rate_total = 0;
-  double miss_rate_read = 0;
+  double overall_miss_rate = 0;
+  double read_miss_rate = 0;
   int dirty_evictions = 0;
-  int misses_load = 0;
-  int misses_store = 0;
-  int misses_total = 0;
-  int hits_load = 0;
-  int hits_store = 0;
-  int hits_total = 0;
+  int load_misses = 0;
+  int store_misses = 0;
+  int total_misses = 0;
+  int load_hits = 0;
+  int store_hits = 0;
+  int total_hits = 0;
   /***********************************************/
 
   /* Parse argruments */
@@ -83,7 +83,7 @@ int main(int argc, char * argv []) {
     }
     if (arg == "-a") {
       if(i + 1 < argc){
-        asociatividad = stoi(argv[i+1]);
+        n_way = stoi(argv[i+1]);
       } else {
         print_usage();
       }
@@ -105,23 +105,28 @@ int main(int argc, char * argv []) {
     }
   }
   // Checks if all parameters are assigned
-  if(tam_cache_kb == 0 || tam_bloque_b == 0 || asociatividad == 0 || rp == RANDOM){
+  if(tam_cache_kb == 0 || tam_bloque_b == 0 || n_way == 0 || rp == RANDOM){
     print_usage();
   }
   // Getting tag, index and offset sizes
-  field_size_get( tam_cache_kb, asociatividad, tam_bloque_b,
+  field_size_get( tam_cache_kb, n_way, tam_bloque_b,
                   &tam_tag, &tam_idx, &tam_offset);
+
+
+
+  //Cache instance
+  int n_blocks = 1<<tam_idx;
+  entry cache[n_blocks][n_way];
 
   /* Get trace's lines and start your simulation */
   string ctrl = "#";
   bool op;
   long long address;
   int ic;
-  long accesos = 0;
-  long load_acc = 0;
-  long store_acc = 0;
+  int index, tag;
+  operation_result op_result;
 
-  cout << endl;
+  //Start simulation
   while (ctrl == "#") {
     ctrl = "N";
     cin >> ctrl;
@@ -129,26 +134,52 @@ int main(int argc, char * argv []) {
     cin >> hex >> address;
     cin >> dec >> ic;
 
+    //Gets tag and index  from address
+    address_tag_idx_get(address, tam_tag, tam_idx, tam_offset,
+                        &index, &tag);
 
-    //if(load_acc > 100){break;}
+    //Keep track of CPU time
     cpu_time = cpu_time + ic;
 
-    if(op){
-      store_acc++;
-    } else{
-      load_acc++;
+
+    //Replacement Policy
+    srrip_replacement_policy(index, tag,  n_way, op,
+                             cache[index], &op_result);
+
+    switch (op_result.miss_hit)
+    {
+    case MISS_LOAD:
+        load_misses++;
+        cpu_time+=20;
+        break;
+    case MISS_STORE:
+        store_misses++;
+        break;
+    case HIT_LOAD:
+        load_hits++;
+        break;
+    case HIT_STORE:
+        store_hits++;
+        break;
+    default:
+        break;
     }
 
+    if(op_result.dirty_eviction){
+        dirty_evictions++;
+    }
+
+
+
+    //cout << ctrl << " " << op << " " << address << " " << ic << endl;
+    //if(cpu_time > 100){break;}
   }//End while
 
-  accesos = store_acc + load_acc;
-  cout << "Accesos:\t" << accesos << endl;
-  cout << "Load:\t" << load_acc << endl;
-  cout << "Store:\t" << store_acc << endl;
-
-
-
-
+  //Get cache simulation stats
+  total_misses = load_misses + store_misses;
+  total_hits = load_hits + store_hits;
+  overall_miss_rate = double(total_misses)/double(total_misses + total_hits);
+  read_miss_rate = double(load_misses)/double(load_misses + store_misses);//REVISAR!!
 
 
   /* Print cache configuration */
@@ -167,23 +198,24 @@ int main(int argc, char * argv []) {
   cout << "Cache parameters:" << endl;
   cout << line_str << endl;
   cout << "Cache Size (KB):\t\t" << tam_cache_kb << endl;
-  cout << "Cache Associativity:\t\t" << asociatividad << endl;
+  cout << "Cache Associativity:\t\t" << n_way << endl;
   cout << "Cache Block Size (bytes):\t" << tam_bloque_b << endl;
   cout << line_str << endl;
   cout << "Simulation results:" << endl;
   cout << line_str << endl;
   cout << "CPU time (cycles):\t\t" << cpu_time << endl;
   cout << "AMAT (cycles):\t\t\t" << amat << endl;
-  cout << "Overall miss rate:\t\t" << miss_rate_total << endl;
-  cout << "Read miss rate:\t\t\t" << miss_rate_read << endl;
+  cout << "Overall miss rate:\t\t" << overall_miss_rate << endl;
+  cout << "Read miss rate:\t\t\t" << read_miss_rate << endl;
   cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
-  cout << "Load misses:\t\t\t" << misses_load << endl;
-  cout << "Store misses:\t\t\t" << misses_store << endl;
-  cout << "Total misses:\t\t\t" << misses_total << endl;
-  cout << "Load hits:\t\t\t" << hits_load << endl;
-  cout << "Store hits:\t\t\t" << hits_store << endl;
-  cout << "Total hits:\t\t\t" << hits_total << endl;
+  cout << "Load misses:\t\t\t" << load_misses << endl;
+  cout << "Store misses:\t\t\t" << store_misses << endl;
+  cout << "Total misses:\t\t\t" << total_misses << endl;
+  cout << "Load hits:\t\t\t" << load_hits << endl;
+  cout << "Store hits:\t\t\t" << store_hits << endl;
+  cout << "Total hits:\t\t\t" << total_hits << endl;
   cout << line_str << endl << endl;
+
 
 return 0;
 }

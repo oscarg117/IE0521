@@ -17,7 +17,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(TARGET) $(OBJ)
 
 run:
-	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC1) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
 
 run1:
 	./$(TARGET) -a $(ASOC1) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)

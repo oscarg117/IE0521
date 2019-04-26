@@ -55,7 +55,22 @@ int srrip_replacement_policy (int idx,
                              operation_result* result,
                              bool debug)
 {
-   return ERROR;
+
+    for (int i = 0; i < associativity; i++){
+        cache_blocks[i].valid = true;
+        cache_blocks[i].dirty = false;
+        cache_blocks[i].tag = tag;
+        cache_blocks[i].rp_value = i;
+    }
+
+    if(loadstore){
+        result->miss_hit = MISS_STORE;
+    } else {
+        result->miss_hit = MISS_LOAD;
+    }
+    result->dirty_eviction = false;
+
+   return OK;
 }
 
 
