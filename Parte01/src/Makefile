@@ -1,7 +1,7 @@
 #Makefile para la compilación del simulador de Cache
 CC = g++
 CFLAGS = -o
-SOURCE = main.cpp L1cache.cpp
+SOURCE = main.cpp L1cache.cpp debug_utilities.cpp
 OBJ = $(SOURCE:.cpp = .o)
 TARGET = cache
 #Argumentos

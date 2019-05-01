@@ -68,13 +68,16 @@ int srrip_replacement_policy(int idx,
         if(cache_blocks[i].valid){ //Checks if data is valid
             if(cache_blocks[i].tag == tag){ //Checks tag
                 // There is a HIT
+                result->dirty_eviction = false;
                 // Sets the result as a HIT
                 if(loadstore){ //Checks operation type
                     result->miss_hit = HIT_STORE;
-                    result->dirty_eviction = false;
+                    // In a store, the block is dirty
+                    cache_blocks[i].dirty = true;
                 } else {
                     result->miss_hit = HIT_LOAD;
-                    result->dirty_eviction = false;
+                    // In a load, the block isn't dirty
+                    cache_blocks[i].dirty = false;
                 }
                 // Update RP Value
                 cache_blocks[i].rp_value = 0;
@@ -85,10 +88,8 @@ int srrip_replacement_policy(int idx,
     //If you're here, well, there is a MISS
     if(loadstore){ //Checks operation type
         result->miss_hit = MISS_STORE;
-        result->dirty_eviction = false;
     } else {
         result->miss_hit = MISS_LOAD;
-        result->dirty_eviction = false;
     }
     // Insert block from main memory
     for(i = 0; i < srrip_value; i++){ // For loop  N1
@@ -96,6 +97,16 @@ int srrip_replacement_policy(int idx,
         for(j = 0; j < associativity; j++){ // For loop N2
            if (cache_blocks[j].rp_value == srrip_value - 1) {
                i = srrip_value; // temp var to exit For Loop N1
+               // Checks dirty bit
+               if(cache_blocks[j].dirty){ // There is a dirty eviction
+                   result->dirty_eviction = true;
+                   if(!loadstore){
+                       cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                   }
+               } else { // There isn't dirty eviction
+                    result->dirty_eviction = false;
+               }
+
                cache_blocks[j].tag = tag;
                cache_blocks[j].rp_value = srrip_value - 2;
                cache_blocks[j].valid = true;
@@ -105,8 +116,14 @@ int srrip_replacement_policy(int idx,
         if(i == srrip_value){ break; } // Exits For loop N1
         // Increases RP Value
         for(j = 0; j < associativity; j++){
-            cache_blocks[i].rp_value++;
+            if(cache_blocks[j].rp_value < srrip_value){
+                cache_blocks[j].rp_value++;
+            } else {
+                cache_blocks[j].rp_value = srrip_value - 1;
+            }
         }
+        //print_way_info(idx, associativity, cache_blocks);
+        //cout << "Dirty eviction: " << result->dirty_eviction << endl;
     }
 
     return OK;

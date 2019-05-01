@@ -191,7 +191,7 @@ int main(int argc, char * argv []) {
 
 
     //cout << ctrl << " " << op << " " << address << " " << ic << endl;
-    //if(cpu_time > 100){break;}
+    //if(cpu_time > 1000){break;}
   }//End while
 
   //Get cache simulation stats
@@ -225,14 +225,14 @@ int main(int argc, char * argv []) {
   cout << line_str << endl;
   cout << "CPU time (cycles):\t\t" << cpu_time << endl;
   cout << "AMAT (cycles):\t\t\t" << amat << endl;
-  cout << "Overall miss rate:\t\t" << overall_miss_rate << endl;
+  cout << "Overall miss rate:\t\t" << overall_miss_rate << " (0.6325)" << endl;
   cout << "Read miss rate:\t\t\t" << read_miss_rate << endl;
-  cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
-  cout << "Load misses:\t\t\t" << load_misses << endl;
-  cout << "Store misses:\t\t\t" << store_misses << endl;
+  cout << "Dirty Evictions:\t\t" << dirty_evictions << " (1001689)" << endl;
+  cout << "Load misses:\t\t\t" << load_misses << " (3396571)" << endl;
+  cout << "Store misses:\t\t\t" << store_misses << " (995541)"  << endl;
   cout << "Total misses:\t\t\t" << total_misses << endl;
-  cout << "Load hits:\t\t\t" << load_hits << endl;
-  cout << "Store hits:\t\t\t" << store_hits << endl;
+  cout << "Load hits:\t\t\t" << load_hits << " (2192901)" << endl;
+  cout << "Store hits:\t\t\t" << store_hits << " (358844)" << endl;
   cout << "Total hits:\t\t\t" << total_hits << endl;
   cout << line_str << endl << endl;
 
