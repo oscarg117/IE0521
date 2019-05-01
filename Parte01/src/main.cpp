@@ -112,6 +112,7 @@ int main(int argc, char * argv []) {
   field_size_get( tam_cache_kb, n_way, tam_bloque_b,
                   &tam_tag, &tam_idx, &tam_offset);
 
+
   int srrip_value; // 2^m
   if(n_way <= 2){
       srrip_value = 1<<1; // 2^1
@@ -157,7 +158,7 @@ int main(int argc, char * argv []) {
     //Replacement Policy
     if(rp == RRIP){
         // In this case "idx" argument is used as "srrip value" AKA "2^m"
-        srrip_replacement_policy(srrip_value, tag,  n_way, op,
+        srrip_replacement_policy(index, tag,  n_way, op,
                                  cache[index], &op_result);
     } else {
         lru_replacement_policy(index, tag,  n_way, op,

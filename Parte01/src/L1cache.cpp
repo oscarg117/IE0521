@@ -56,6 +56,13 @@ int srrip_replacement_policy(int idx,
                              bool debug)
 {
     int i, j;
+    int srrip_value; // 2^m
+    if(associativity <= 2){
+        srrip_value = 1<<1; // 2^1
+    } else {
+        srrip_value = 1<<2; // 2^2
+    }
+
     // Searching tag
     for(i = 0; i < associativity; i++){ //Iterates over the entry
         if(cache_blocks[i].valid){ //Checks if data is valid
@@ -84,18 +91,18 @@ int srrip_replacement_policy(int idx,
         result->dirty_eviction = false;
     }
     // Insert block from main memory
-    for(i = 0; i < idx; i++){ // For loop  N1
+    for(i = 0; i < srrip_value; i++){ // For loop  N1
         // Searching RP Value = 2^m-1
         for(j = 0; j < associativity; j++){ // For loop N2
-           if (cache_blocks[j].rp_value == idx - 1) {
-               i = idx; // temp var to exit For Loop N1
+           if (cache_blocks[j].rp_value == srrip_value - 1) {
+               i = srrip_value; // temp var to exit For Loop N1
                cache_blocks[j].tag = tag;
-               cache_blocks[j].rp_value--;
+               cache_blocks[j].rp_value = srrip_value - 2;
                cache_blocks[j].valid = true;
                break; // Exits For loop N2
            }
         }
-        if(i == idx){ break; } // Exits For loop N1
+        if(i == srrip_value){ break; } // Exits For loop N1
         // Increases RP Value
         for(j = 0; j < associativity; j++){
             cache_blocks[i].rp_value++;
