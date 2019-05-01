@@ -112,11 +112,23 @@ int main(int argc, char * argv []) {
   field_size_get( tam_cache_kb, n_way, tam_bloque_b,
                   &tam_tag, &tam_idx, &tam_offset);
 
-
+  int srrip_value; // 2^m
+  if(n_way <= 2){
+      srrip_value = 1<<1; // 2^1
+  } else {
+      srrip_value = 1<<2; // 2^2
+  }
 
   //Cache instance
   int n_blocks = 1<<tam_idx;
   entry cache[n_blocks][n_way];
+  for (int i = 0; i < n_blocks; i++){
+      for (int j = 0; j < n_way; j++){
+          cache[i][j].valid = false;
+          cache[i][j].dirty = false;
+          cache[i][j].rp_value = srrip_value - 1;
+      }
+  }
 
   /* Get trace's lines and start your simulation */
   string ctrl = "#";
@@ -143,8 +155,14 @@ int main(int argc, char * argv []) {
 
 
     //Replacement Policy
-    srrip_replacement_policy(index, tag,  n_way, op,
-                             cache[index], &op_result);
+    if(rp == RRIP){
+        // In this case "idx" argument is used as "srrip value" AKA "2^m"
+        srrip_replacement_policy(srrip_value, tag,  n_way, op,
+                                 cache[index], &op_result);
+    } else {
+        lru_replacement_policy(index, tag,  n_way, op,
+                                 cache[index], &op_result);
+    }
 
     switch (op_result.miss_hit)
     {
@@ -180,6 +198,7 @@ int main(int argc, char * argv []) {
   total_hits = load_hits + store_hits;
   overall_miss_rate = double(total_misses)/double(total_misses + total_hits);
   read_miss_rate = double(load_misses)/double(load_misses + store_misses);//REVISAR!!
+  amat = 1.0 + overall_miss_rate * 20.0;
 
 
   /* Print cache configuration */
