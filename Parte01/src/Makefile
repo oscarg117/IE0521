@@ -30,5 +30,17 @@ run2:
 run4:
 	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
 
+run0:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run01:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run02:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run04:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
 clean:
 	rm -f $(TARGET) ./*.o ./*.gch

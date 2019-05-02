@@ -55,82 +55,87 @@ int srrip_replacement_policy(int idx,
                              operation_result* result,
                              bool debug)
 {
-    int i, j;
-    int srrip_value; // 2^m
-    if(associativity <= 2){
-        srrip_value = 1<<1; // 2^1
-    } else {
-        srrip_value = 1<<2; // 2^2
-    }
+  // Checks parameters
+  if( (idx <= 0) || (tag <= 0) || (associativity <= 0) ){
+    return PARAM;
+  }
 
-    // Searching tag
-    for(i = 0; i < associativity; i++){ //Iterates over the entry
-        if(cache_blocks[i].valid){ //Checks if data is valid
-            if(cache_blocks[i].tag == tag){ //Checks tag
-                // There is a HIT
-                result->dirty_eviction = false;
-                // Sets the result as a HIT
-                if(loadstore){ //Checks operation type
-                    result->miss_hit = HIT_STORE;
-                    // In a store, the block is dirty
-                    cache_blocks[i].dirty = true;
-                } else {
-                    result->miss_hit = HIT_LOAD;
-                    // In a load, the block isn't dirty
-                    cache_blocks[i].dirty = false;
-                }
-                // Update RP Value
-                cache_blocks[i].rp_value = 0;
-                return OK; // Exits RP Function
-            }
-        }
-    }
-    //If you're here, well, there is a MISS
+  int i, j;
+  int srrip_value; // 2^m
+  if(associativity <= 2){
+      srrip_value = 1<<1; // 2^1
+  } else {
+      srrip_value = 1<<2; // 2^2
+  }
 
-    // Insert block from main memory
-    for(i = 0; i < srrip_value; i++){ // For loop  N1
-      // Searching RP Value = 2^m-1
-      for(j = 0; j < associativity; j++){ // For loop N2
-         if (cache_blocks[j].rp_value == srrip_value - 1) {
-             i = srrip_value; // temp var to exit For Loop N1
-             // Checks dirty bit
-             if(cache_blocks[j].dirty){ // There is a dirty eviction
-                 result->dirty_eviction = true;
-                 if(loadstore){
-                     cache_blocks[j].dirty = true; // In a store there is dirty bit
-                     result->miss_hit = MISS_STORE;
-                 } else {
-                     cache_blocks[j].dirty = false; // In a load there isn't dirty bit
-                     result->miss_hit = MISS_LOAD;
-                 }
-             } else { // There isn't dirty eviction
-                  result->dirty_eviction = false;
-                  if(loadstore){
-                      cache_blocks[j].dirty = true; // In a store there is dirty bit
-                      result->miss_hit = MISS_STORE;
-                  } else {
-                      cache_blocks[j].dirty = false; // In a load there isn't dirty bit
-                      result->miss_hit = MISS_LOAD;
-                  }
-             }
-
-             cache_blocks[j].tag = tag;
-             cache_blocks[j].rp_value = srrip_value - 2;
-             cache_blocks[j].valid = true;
-             break; // Exits For loop N2
-         }
-      }
-      if(i == srrip_value){ break; } // Exits For loop N1
-      // Increases RP Value
-      for(j = 0; j < associativity; j++){
-          if(cache_blocks[j].rp_value < srrip_value){
-              cache_blocks[j].rp_value++;
-          } else {
-              cache_blocks[j].rp_value = srrip_value - 1;
+  // Searching tag
+  for(i = 0; i < associativity; i++){ //Iterates over the entry
+      if(cache_blocks[i].valid){ //Checks if data is valid
+          if(cache_blocks[i].tag == tag){ //Checks tag
+              // There is a HIT
+              result->dirty_eviction = false;
+              // Sets the result as a HIT
+              if(loadstore){ //Checks operation type
+                  result->miss_hit = HIT_STORE;
+                  // In a store, the block is dirty
+                  cache_blocks[i].dirty = true;
+              } else {
+                  result->miss_hit = HIT_LOAD;
+                  // In a load, the block isn't dirty
+                  cache_blocks[i].dirty = false;
+              }
+              // Update RP Value
+              cache_blocks[i].rp_value = 0;
+              return OK; // Exits RP Function
           }
       }
+  }
+  //If you're here, well, there is a MISS
+
+  // Insert block from main memory
+  for(i = 0; i < srrip_value; i++){ // For loop  N1
+    // Searching RP Value = 2^m-1
+    for(j = 0; j < associativity; j++){ // For loop N2
+       if (cache_blocks[j].rp_value == srrip_value - 1) {
+           i = srrip_value; // temp var to exit For Loop N1
+           // Checks dirty bit
+           if(cache_blocks[j].dirty){ // There is a dirty eviction
+               result->dirty_eviction = true;
+               if(loadstore){
+                   cache_blocks[j].dirty = true; // In a store there is dirty bit
+                   result->miss_hit = MISS_STORE;
+               } else {
+                   cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                   result->miss_hit = MISS_LOAD;
+               }
+           } else { // There isn't dirty eviction
+                result->dirty_eviction = false;
+                if(loadstore){
+                    cache_blocks[j].dirty = true; // In a store there is dirty bit
+                    result->miss_hit = MISS_STORE;
+                } else {
+                    cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                    result->miss_hit = MISS_LOAD;
+                }
+           }
+
+           cache_blocks[j].tag = tag;
+           cache_blocks[j].rp_value = srrip_value - 2;
+           cache_blocks[j].valid = true;
+           break; // Exits For loop N2
+       }
     }
-    return OK;
+    if(i == srrip_value){ break; } // Exits For loop N1
+    // Increases RP Value
+    for(j = 0; j < associativity; j++){
+        if(cache_blocks[j].rp_value < srrip_value){
+            cache_blocks[j].rp_value++;
+        } else {
+            cache_blocks[j].rp_value = srrip_value - 1;
+        }
+    }
+  }
+  return OK;
  }
 
 
@@ -144,6 +149,10 @@ int lru_replacement_policy (int idx,
                              operation_result* result,
                              bool debug)
 {
+  // Checks parameters
+  if( (idx <= 0) || (tag <= 0) || (associativity <= 0) ){
+    return PARAM;
+  }
   int j;
   // Searching tag
   for(j = 0; j < associativity; j++){ //Iterates over the entry
