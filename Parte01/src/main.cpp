@@ -188,9 +188,6 @@ int main(int argc, char * argv []) {
         dirty_evictions++;
     }
 
-
-
-    //cout << ctrl << " " << op << " " << address << " " << ic << endl;
     //if(cpu_time > 1000){break;}
   }//End while
 
@@ -198,7 +195,7 @@ int main(int argc, char * argv []) {
   total_misses = load_misses + store_misses;
   total_hits = load_hits + store_hits;
   overall_miss_rate = double(total_misses)/double(total_misses + total_hits);
-  read_miss_rate = double(load_misses)/double(load_misses + store_misses);//REVISAR!!
+  read_miss_rate = double(load_misses)/double(load_misses + load_hits);
   amat = 1.0 + overall_miss_rate * 20.0;
 
 
@@ -225,14 +222,14 @@ int main(int argc, char * argv []) {
   cout << line_str << endl;
   cout << "CPU time (cycles):\t\t" << cpu_time << endl;
   cout << "AMAT (cycles):\t\t\t" << amat << endl;
-  cout << "Overall miss rate:\t\t" << overall_miss_rate << " (0.6325)" << endl;
+  cout << "Overall miss rate:\t\t" << overall_miss_rate << endl;
   cout << "Read miss rate:\t\t\t" << read_miss_rate << endl;
-  cout << "Dirty Evictions:\t\t" << dirty_evictions << " (1001689)" << endl;
-  cout << "Load misses:\t\t\t" << load_misses << " (3396571)" << endl;
-  cout << "Store misses:\t\t\t" << store_misses << " (995541)"  << endl;
+  cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
+  cout << "Load misses:\t\t\t" << load_misses << endl;
+  cout << "Store misses:\t\t\t" << store_misses << endl;
   cout << "Total misses:\t\t\t" << total_misses << endl;
-  cout << "Load hits:\t\t\t" << load_hits << " (2192901)" << endl;
-  cout << "Store hits:\t\t\t" << store_hits << " (358844)" << endl;
+  cout << "Load hits:\t\t\t" << load_hits << endl;
+  cout << "Store hits:\t\t\t" << store_hits << endl;
   cout << "Total hits:\t\t\t" << total_hits << endl;
   cout << line_str << endl << endl;
 

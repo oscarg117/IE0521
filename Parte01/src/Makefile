@@ -12,6 +12,7 @@ ASOC2 = 2
 ASOC1 = 1
 RP1 = LRU
 RP2 = RRIP
+#RP2 = LRU
 
 
 $(TARGET): $(OBJ)
@@ -24,10 +25,10 @@ run1:
 	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
 
 run2:
-	./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
 
 run4:
-	./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
 
 clean:
 	rm -f $(TARGET) ./*.o ./*.gch

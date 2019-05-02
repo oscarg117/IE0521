@@ -86,46 +86,50 @@ int srrip_replacement_policy(int idx,
         }
     }
     //If you're here, well, there is a MISS
-    if(loadstore){ //Checks operation type
-        result->miss_hit = MISS_STORE;
-    } else {
-        result->miss_hit = MISS_LOAD;
-    }
+
     // Insert block from main memory
     for(i = 0; i < srrip_value; i++){ // For loop  N1
-        // Searching RP Value = 2^m-1
-        for(j = 0; j < associativity; j++){ // For loop N2
-           if (cache_blocks[j].rp_value == srrip_value - 1) {
-               i = srrip_value; // temp var to exit For Loop N1
-               // Checks dirty bit
-               if(cache_blocks[j].dirty){ // There is a dirty eviction
-                   result->dirty_eviction = true;
-                   if(!loadstore){
-                       cache_blocks[j].dirty = false; // In a load there isn't dirty bit
-                   }
-               } else { // There isn't dirty eviction
-                    result->dirty_eviction = false;
-               }
+      // Searching RP Value = 2^m-1
+      for(j = 0; j < associativity; j++){ // For loop N2
+         if (cache_blocks[j].rp_value == srrip_value - 1) {
+             i = srrip_value; // temp var to exit For Loop N1
+             // Checks dirty bit
+             if(cache_blocks[j].dirty){ // There is a dirty eviction
+                 result->dirty_eviction = true;
+                 if(loadstore){
+                     cache_blocks[j].dirty = true; // In a store there is dirty bit
+                     result->miss_hit = MISS_STORE;
+                 } else {
+                     cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                     result->miss_hit = MISS_LOAD;
+                 }
+             } else { // There isn't dirty eviction
+                  result->dirty_eviction = false;
+                  if(loadstore){
+                      cache_blocks[j].dirty = true; // In a store there is dirty bit
+                      result->miss_hit = MISS_STORE;
+                  } else {
+                      cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                      result->miss_hit = MISS_LOAD;
+                  }
+             }
 
-               cache_blocks[j].tag = tag;
-               cache_blocks[j].rp_value = srrip_value - 2;
-               cache_blocks[j].valid = true;
-               break; // Exits For loop N2
-           }
-        }
-        if(i == srrip_value){ break; } // Exits For loop N1
-        // Increases RP Value
-        for(j = 0; j < associativity; j++){
-            if(cache_blocks[j].rp_value < srrip_value){
-                cache_blocks[j].rp_value++;
-            } else {
-                cache_blocks[j].rp_value = srrip_value - 1;
-            }
-        }
-        //print_way_info(idx, associativity, cache_blocks);
-        //cout << "Dirty eviction: " << result->dirty_eviction << endl;
+             cache_blocks[j].tag = tag;
+             cache_blocks[j].rp_value = srrip_value - 2;
+             cache_blocks[j].valid = true;
+             break; // Exits For loop N2
+         }
+      }
+      if(i == srrip_value){ break; } // Exits For loop N1
+      // Increases RP Value
+      for(j = 0; j < associativity; j++){
+          if(cache_blocks[j].rp_value < srrip_value){
+              cache_blocks[j].rp_value++;
+          } else {
+              cache_blocks[j].rp_value = srrip_value - 1;
+          }
+      }
     }
-
     return OK;
  }
 
@@ -140,19 +144,68 @@ int lru_replacement_policy (int idx,
                              operation_result* result,
                              bool debug)
 {
-    for (int i = 0; i < associativity; i++){
-        cache_blocks[i].valid = true;
-        cache_blocks[i].dirty = false;
-        cache_blocks[i].tag = tag;
-        cache_blocks[i].rp_value = i;
-    }
+  int j;
+  // Searching tag
+  for(j = 0; j < associativity; j++){ //Iterates over the entry
+      if(cache_blocks[j].valid){ //Checks if data is valid
+          if(cache_blocks[j].tag == tag){ //Checks tag
+              // There is a HIT
+              result->dirty_eviction = false;
+              // Sets the result as a HIT
+              if(loadstore){ //Checks operation type
+                  result->miss_hit = HIT_STORE;
+                  // In a store, the block is dirty
+                  cache_blocks[j].dirty = true;
+              } else {
+                  result->miss_hit = HIT_LOAD;
+                  // In a load, the block isn't dirty
+                  cache_blocks[j].dirty = false;
+              }
+              // Update RP Value
+              cache_blocks[j].rp_value = -1;
+          }
+      }
+  }
+  //If you're here, well, there is a MISS
 
-    if(loadstore){
-        result->miss_hit = MISS_STORE;
-    } else {
-        result->miss_hit = MISS_LOAD;
-    }
-    result->dirty_eviction = false;
+  // Insert block from main memory
+  // Searching RP Value = associativity - 1
+  for(j = 0; j < associativity; j++){ // For loop N1
+     if (cache_blocks[j].rp_value == associativity - 1) {
+         // Checks dirty bit
+         if(cache_blocks[j].dirty){ // There is a dirty eviction
+             result->dirty_eviction = true;
+             if(loadstore){
+                 cache_blocks[j].dirty = true; // In a store there is dirty bit
+                 result->miss_hit = MISS_STORE;
+             } else {
+                 cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                 result->miss_hit = MISS_LOAD;
+             }
+         } else { // There isn't dirty eviction
+              result->dirty_eviction = false;
+              if(loadstore){
+                  cache_blocks[j].dirty = true; // In a store there is dirty bit
+                  result->miss_hit = MISS_STORE;
+              } else {
+                  cache_blocks[j].dirty = false; // In a load there isn't dirty bit
+                  result->miss_hit = MISS_LOAD;
+              }
+         }
 
-   return OK;
+         cache_blocks[j].tag = tag;
+         cache_blocks[j].rp_value = -1;
+         cache_blocks[j].valid = true;
+         break; // Exits For loop N1
+      }
+    }
+    // Increases RP Value
+    for(j = 0; j < associativity; j++){
+        if(cache_blocks[j].rp_value < associativity){
+            cache_blocks[j].rp_value++;
+        } else {
+            cache_blocks[j].rp_value = associativity - 1;
+        }
+    }
+  return OK;
 }
