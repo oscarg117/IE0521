@@ -105,7 +105,7 @@ int main(int argc, char * argv []) {
     }
   }
   // Checks if all parameters are assigned
-  if(tam_cache_kb == 0 || tam_bloque_b == 0 || n_way == 0 || rp == RANDOM){
+  if(tam_cache_kb <= 0 || tam_bloque_b <= 0 || n_way <= 0 || rp == RANDOM){
     print_usage();
   }
   // Getting tag, index and offset sizes
@@ -202,11 +202,11 @@ int main(int argc, char * argv []) {
   /* Print cache configuration */
 
   cout << endl;
-  cout << "RP:\t\t" << rp << endl;
-  cout << "Index size:\t" << tam_idx << endl;
+  cout << "Replacement Policy:\t\t" << rp << endl;
+/*  cout << "Index size:\t" << tam_idx << endl;
   cout << "Offset size:\t" << tam_offset << endl;
   cout << "Tag size:\t" << tam_tag << endl;
-  cout << endl;
+*/  cout << endl;
 
   /* Print Statistics */
   string line_str =  "--------------------------------------------";
