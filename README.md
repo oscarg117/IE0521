@@ -10,8 +10,8 @@ To execute this project you have to run on your terminal the next commands
 
 For simulation:
 3. cd PATH/IE0521/Parte01/src
-4. make
-5. ./l1cache
+4. make -f SimMakefile
+5. ./cache
 
 For tests:
 6. cd PATH/IE0521/Parte01/tes
