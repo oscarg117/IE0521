@@ -154,11 +154,13 @@ int lru_replacement_policy (int idx,
     return PARAM;
   }
   int j;
+  bool hit = false;
   // Searching tag
   for(j = 0; j < associativity; j++){ //Iterates over the entry
       if(cache_blocks[j].valid){ //Checks if data is valid
           if(cache_blocks[j].tag == tag){ //Checks tag
               // There is a HIT
+              hit = true;
               result->dirty_eviction = false;
               // Sets the result as a HIT
               if(loadstore){ //Checks operation type
@@ -175,12 +177,14 @@ int lru_replacement_policy (int idx,
           }
       }
   }
-  //If you're here, well, there is a MISS
 
-  // Insert block from main memory
-  // Searching RP Value = associativity - 1
-  for(j = 0; j < associativity; j++){ // For loop N1
-     if (cache_blocks[j].rp_value == associativity - 1) {
+  if(!hit){
+    //If you're here, well, there is a MISS
+
+    // Insert block from main memory
+    // Searching RP Value = associativity - 1
+    for(j = 0; j < associativity; j++){ // For loop N1
+      if (cache_blocks[j].rp_value == associativity - 1) {
          // Checks dirty bit
          if(cache_blocks[j].dirty){ // There is a dirty eviction
              result->dirty_eviction = true;
@@ -208,13 +212,15 @@ int lru_replacement_policy (int idx,
          break; // Exits For loop N1
       }
     }
-    // Increases RP Value
-    for(j = 0; j < associativity; j++){
-        if(cache_blocks[j].rp_value < associativity){
-            cache_blocks[j].rp_value++;
-        } else {
-            cache_blocks[j].rp_value = associativity - 1;
-        }
-    }
+  }
+  // Increases RP Value
+  for(j = 0; j < associativity; j++){
+      if(cache_blocks[j].rp_value < associativity){
+          cache_blocks[j].rp_value++;
+      } else {
+          cache_blocks[j].rp_value = associativity - 1;
+      }
+  }
+
   return OK;
 }
