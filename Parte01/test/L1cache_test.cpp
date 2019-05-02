@@ -50,7 +50,7 @@ TEST(L1cache, hit_miss_srrip){
           tag,
           associativity);
   }
- 
+
   struct entry cache_line[associativity];
   /* Check for a miss */
   DEBUG(Checking miss operation);
@@ -66,8 +66,8 @@ TEST(L1cache, hit_miss_srrip){
       }
     }
     loadstore = (bool)i;
-    status = srrip_replacement_policy(idx, 
-                                     tag, 
+    status = srrip_replacement_policy(idx,
+                                     tag,
                                      associativity,
                                      loadstore,
                                      cache_line,
@@ -79,14 +79,14 @@ TEST(L1cache, hit_miss_srrip){
     EXPECT_EQ(result.miss_hit, expected_miss_hit);
   }
   /*
-   * Check for hit: block was replaced in last iteration, if we used the same 
+   * Check for hit: block was replaced in last iteration, if we used the same
    * tag now we will get a hit
    */
   DEBUG(Checking hit operation);
   for (i = 0 ; i < 2; i++){
     loadstore = (bool)i;
-    status = srrip_replacement_policy(idx, 
-                                     tag, 
+    status = srrip_replacement_policy(idx,
+                                     tag,
                                      associativity,
                                      loadstore,
                                      cache_line,
@@ -119,7 +119,7 @@ TEST(L1cache, hit_miss_lru) {
 
 /*
  * TEST3: Verifies replacement policy promotion and eviction
- * 1. Choose a random policy 
+ * 1. Choose a random policy
  * 2. Choose a random associativity
  * 3. Fill a cache entry
  * 4. Insert a new block A
@@ -155,21 +155,71 @@ TEST(L1cache, writeback){
 /*
  * TEST5: Verifies an error is return when invalid parameters are pass
  * performed.
- * 1. Choose a random policy 
+ * 1. Choose a random policy
  * 2. Choose invalid parameters for idx, tag and asociativy
  * 3. Check function returns a PARAM error condition
  */
 TEST(L1cache, boundaries){
 
+    int idx;
+    int tag;
+    int associativity;
+    bool loadstore = 1;
+    bool debug = 0;
+    struct operation_result result = {};
+    replacement_policy rp;
+    int return_type;
+
+    if(rand()%2){
+      rp = LRU;
+    } else {
+      rp = RRIP;
+    }
+
+    idx = -1;
+    tag = -1;
+    associativity = -1;
+    if (debug_on) {
+      printf("Entry Info\n idx: %d\n tag: %d\n associativity: %d\n",
+            idx,
+            tag,
+            associativity);
+    }
+
+    struct entry cache_line[associativity];
+
+    DEBUG(Checking parameters);
+
+      if(rp == RRIP){
+          // In this case "idx" argument is used as "srrip value" AKA "2^m"
+          return_type = srrip_replacement_policy(   idx,
+                                           tag,
+                                           associativity,
+                                           loadstore,
+                                           cache_line,
+                                           &result,
+                                           bool(debug_on));
+      } else {
+          return_type = lru_replacement_policy(     idx,
+                                           tag,
+                                           associativity,
+                                           loadstore,
+                                           cache_line,
+                                           &result,
+                                           (bool)debug_on);
+      }
+
+    EXPECT_EQ(return_type,1);
+
 }
 
-/* 
+/*
  * Gtest main function: Generates random seed, if not provided,
  * parses DEBUG flag, and execute the test suite
  */
 int main(int argc, char **argv) {
   int argc_to_pass = 0;
-  char **argv_to_pass = NULL; 
+  char **argv_to_pass = NULL;
   int seed = 0;
 
   /* Generate seed */
@@ -177,7 +227,7 @@ int main(int argc, char **argv) {
 
   /* Parse arguments looking if random seed was provided */
   argv_to_pass = (char **)calloc(argc + 1, sizeof(char *));
-  
+
   for (int i = 0; i < argc; i++){
     std::string arg = std::string(argv[i]);
 
@@ -202,7 +252,7 @@ int main(int argc, char **argv) {
 
   /* Execute test */
   return RUN_ALL_TESTS();
-  
+
   /* Free memory */
   free(argv_to_pass);
 
