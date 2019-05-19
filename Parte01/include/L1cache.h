@@ -94,6 +94,31 @@ void address_tag_idx_get(long address,
                          int *tag);
 
 
+
+
+
+
+/* Busca si existe dato en línea de cache */
+/* Retorna el índice del bloque con el dato */
+/* Retorna -1 si no existe el dato en la línea */
+int buscar_dato( int tag,
+                 int associativity,
+                 entry* cache_blocks);
+
+
+
+/* Busca bloque con mayor RPV */
+/* Retorna el índice del bloque con mayor RPV */
+int buscar_rpv( int associativity,
+                entry* cache_blocks);
+
+
+
+
+
+
+
+
 /*
  * Search for an address in a cache set and
  * replaces blocks using SRRIP(hp) policy

@@ -15,5 +15,9 @@ void get_env_var( const char* var_name,
 /* Print way info */
 void print_way_info(int idx,
                     int associativity,
-                    entry* cache_blocks); 
+                    entry* cache_blocks);
+
+
+
+
 #endif

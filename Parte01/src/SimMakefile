@@ -5,21 +5,21 @@ SOURCE = main.cpp L1cache.cpp debug_utilities.cpp
 OBJ = $(SOURCE:.cpp = .o)
 TARGET = cache
 #Argumentos
-TCACHE = 64
-TBLOQUE = 8
-ASOC4 = 4
+TCACHE = 32
+TBLOQUE = 64
+ASOC4 = 8
 ASOC2 = 2
 ASOC1 = 1
-RP1 = LRU
-RP2 = RRIP
-#RP2 = LRU
+RP1 = RRIP
+#RP2 = RRIP
+RP2 = LRU
 
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(TARGET) $(OBJ)
 
 run:
-	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
 
 run1:
 	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)

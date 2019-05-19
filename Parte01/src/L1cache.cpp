@@ -47,6 +47,50 @@ void address_tag_idx_get(long address,
 
 }
 
+
+/* Busca si existe dato en línea de cache */
+/* Retorna el índice del bloque con el dato */
+/* Retorna -1 si no existe el dato en la línea */
+int buscar_dato(int tag,
+                int associativity,
+                entry* cache_blocks){
+
+  int block_idx = -1;
+  for (size_t i = 0; i < associativity; i++) {
+    if(cache_blocks[i].valid){
+      if(cache_blocks[i].tag == tag){
+        block_idx = i;
+        return i;
+      }
+    }
+  }
+
+  return block_idx;
+}
+
+
+/* Busca bloque con mayor RPV */
+/* Retorna el índice del bloque con mayor RPV */
+int buscar_rpv( int associativity,
+                entry* cache_blocks){
+  int max = 0;
+  size_t max_idx = 0;
+  for (size_t i = 0; i < associativity; i++) {
+//for (size_t i = associativity - 1; i > 0; i--) {
+    if(cache_blocks[i].rp_value > max){
+      max = cache_blocks[i].rp_value;
+      max_idx = i;
+    }
+  }
+
+  cache_blocks[max_idx].valid = true;
+  return max_idx;
+
+}
+
+
+
+
 int srrip_replacement_policy(int idx,
                              int tag,
                              int associativity,
@@ -141,7 +185,7 @@ int srrip_replacement_policy(int idx,
 
 
 
-int lru_replacement_policy (int idx,
+int lru_replacement_policy ( int idx,
                              int tag,
                              int associativity,
                              bool loadstore,
@@ -153,73 +197,92 @@ int lru_replacement_policy (int idx,
   if( (idx <= 0) || (tag <= 0) || (associativity <= 0) ){
     return PARAM;
   }
-  int j;
-  bool hit = false;
-  // Searching tag
-  for(j = 0; j < associativity; j++){ //Iterates over the entry
-      if(cache_blocks[j].valid){ //Checks if data is valid
-          if(cache_blocks[j].tag == tag){ //Checks tag
-              // There is a HIT
-              hit = true;
-              result->dirty_eviction = false;
-              // Sets the result as a HIT
-              if(loadstore){ //Checks operation type
-                  result->miss_hit = HIT_STORE;
-                  // In a store, the block is dirty
-                  cache_blocks[j].dirty = true;
-              } else {
-                  result->miss_hit = HIT_LOAD;
-                  // In a load, the block isn't dirty
-                  cache_blocks[j].dirty = false;
-              }
-              // Update RP Value
-              cache_blocks[j].rp_value = -1;
-          }
-      }
-  }
+  int block_idx = -1;
+  block_idx = buscar_dato(tag, associativity, cache_blocks);
 
-  if(!hit){
-    //If you're here, well, there is a MISS
+  /********************************************************************/
+  if (loadstore) {
+    //Es un store
+    if (block_idx == -1) {
+      //No hay dato en cache, MISS
+      result->miss_hit = MISS_STORE;
 
-    // Insert block from main memory
-    // Searching RP Value = associativity - 1
-    for(j = 0; j < associativity; j++){ // For loop N1
-      if (cache_blocks[j].rp_value == associativity - 1) {
-         // Checks dirty bit
-         if(cache_blocks[j].dirty){ // There is a dirty eviction
-             result->dirty_eviction = true;
-             if(loadstore){
-                 cache_blocks[j].dirty = true; // In a store there is dirty bit
-                 result->miss_hit = MISS_STORE;
-             } else {
-                 cache_blocks[j].dirty = false; // In a load there isn't dirty bit
-                 result->miss_hit = MISS_LOAD;
-             }
-         } else { // There isn't dirty eviction
-              result->dirty_eviction = false;
-              if(loadstore){
-                  cache_blocks[j].dirty = true; // In a store there is dirty bit
-                  result->miss_hit = MISS_STORE;
-              } else {
-                  cache_blocks[j].dirty = false; // In a load there isn't dirty bit
-                  result->miss_hit = MISS_LOAD;
-              }
-         }
+      block_idx = buscar_rpv(associativity, cache_blocks);
 
-         cache_blocks[j].tag = tag;
-         cache_blocks[j].rp_value = -1;
-         cache_blocks[j].valid = true;
-         break; // Exits For loop N1
-      }
-    }
-  }
-  // Increases RP Value
-  for(j = 0; j < associativity; j++){
-      if(cache_blocks[j].rp_value < associativity){
-          cache_blocks[j].rp_value++;
+      //Hay un eviction
+      if (cache_blocks[block_idx].dirty) {
+        result->dirty_eviction = true;
       } else {
-          cache_blocks[j].rp_value = associativity - 1;
+        result->dirty_eviction = false;
       }
+
+      //Remplazar dato
+      result->evicted_address = cache_blocks[block_idx].tag;
+      cache_blocks[block_idx].tag = tag;
+      cache_blocks[block_idx].rp_value = -1;
+
+
+    } else {
+      //El dato está en cache, HIT
+      result->miss_hit = HIT_STORE;
+
+      cache_blocks[block_idx].rp_value = -1;
+
+
+    }
+
+    //En un store, siempre hay un dirty bit
+    cache_blocks[block_idx].dirty = true;
+
+  /********************************************************************/
+
+  /********************************************************************/
+  } else {
+    //Es un load
+    if (block_idx == -1) {
+      //No hay dato en cache, MISS
+      result->miss_hit = MISS_LOAD;
+
+      block_idx = buscar_rpv(associativity, cache_blocks);
+
+      //Hay un eviction
+      if (cache_blocks[block_idx].dirty) {
+        result->dirty_eviction = true;
+        cache_blocks[block_idx].dirty = false;
+      }  else {
+        result->dirty_eviction = false;
+      }
+
+      //Remplazar dato
+      result->evicted_address = cache_blocks[block_idx].tag;
+      cache_blocks[block_idx].tag = tag;
+      cache_blocks[block_idx].rp_value = -1;
+
+
+
+
+    } else {
+      //El dato está en cache, HIT
+      result->miss_hit = HIT_LOAD;
+
+      cache_blocks[block_idx].rp_value = -1;
+
+
+    }
+
+
+
+
+  }
+  /********************************************************************/
+
+  //Se actualiza RPV
+  for (size_t i = 0; i < associativity; i++) {
+    if(cache_blocks[i].rp_value < associativity){
+      cache_blocks[i].rp_value++;
+    } else {
+      cache_blocks[i].rp_value = associativity - 1;
+    }
   }
 
   return OK;

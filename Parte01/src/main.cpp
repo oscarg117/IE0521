@@ -127,7 +127,8 @@ int main(int argc, char * argv []) {
       for (int j = 0; j < n_way; j++){
           cache[i][j].valid = false;
           cache[i][j].dirty = false;
-          cache[i][j].rp_value = srrip_value - 1;
+          //cache[i][j].rp_value = srrip_value - 1;
+          cache[i][j].rp_value = n_way - 1;
       }
   }
 
@@ -157,11 +158,10 @@ int main(int argc, char * argv []) {
 
     //Replacement Policy
     if(rp == RRIP){
-        // In this case "idx" argument is used as "srrip value" AKA "2^m"
         srrip_replacement_policy(index, tag,  n_way, op,
                                  cache[index], &op_result);
     } else {
-        lru_replacement_policy(index, tag,  n_way, op,
+        lru_replacement_policy(  index, tag,  n_way, op,
                                  cache[index], &op_result);
     }
 
