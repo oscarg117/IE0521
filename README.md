@@ -1,6 +1,6 @@
 # IE0521
 Repository of IE0521 course
-Óscar González
+Oscar González
 Josselin Porras
 
 To execute this project you have to run on your terminal the next commands
@@ -16,7 +16,7 @@ For simulation:
 
 For tests:
 
-6. `cd PATH/IE0521/Parte01/tes`
+6. `cd PATH/IE0521/Parte01/test`
 7. `make`
 8. `./cachetest`
 
