@@ -14,7 +14,7 @@ using namespace std;
 /* Helper funtions */
 void print_usage ()
 {
-  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <n_way> -rp <PR>" << endl;
+  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <n_way> -rp <PR> -opt <OPT>" << endl;
   exit (0);
 }
 
@@ -26,7 +26,21 @@ std::ostream& operator<<(std::ostream& out, const replacement_policy value){
         PROCESS_VAL(LRU);
         PROCESS_VAL(NRU);
         PROCESS_VAL(RRIP);
-        PROCESS_VAL(RANDOM);
+        PROCESS_VAL(RANDOM2);
+    }
+#undef PROCESS_VAL
+
+    return out << s;
+}
+
+std::ostream& operator<<(std::ostream& out, const cache_optimization value){
+    const char* s = 0;
+#define PROCESS_VAL(p) case(p): s = #p; break;
+    switch(value){
+        PROCESS_VAL(VC);
+        PROCESS_VAL(L2);
+        PROCESS_VAL(NONE);
+        PROCESS_VAL(RANDOM2);
     }
 #undef PROCESS_VAL
 
@@ -41,6 +55,7 @@ int main(int argc, char * argv []) {
   int tam_bloque_b = 0;
   int n_way = 0;
   replacement_policy rp = RANDOM;
+  cache_optimization opt = RANDOM2;
   /* From functions */
   int tam_tag = 0;
   int tam_idx = 0;
@@ -57,6 +72,9 @@ int main(int argc, char * argv []) {
   int load_hits = 0;
   int store_hits = 0;
   int total_hits = 0;
+
+  string line_str =  "--------------------------------------------";
+  string line_str0 = "____________________________________________";
   /***********************************************/
 
   /* Parse argruments */
@@ -98,6 +116,23 @@ int main(int argc, char * argv []) {
           rp = RRIP;
         } else {  //Default: RANDOM
           rp = RANDOM;
+        }
+      } else {
+        print_usage();
+      }
+    }
+    if (arg == "-opt") {
+      if(i + 1 < argc){
+        string argOPT = argv[i+1];
+        //Assigns replacement policy
+        if (argOPT == "VC" || argOPT == "vc") {
+          opt = VC;
+        } else if (argOPT == "L2" || argOPT == "l2") {
+          opt = L2;
+        } else if (argOPT == "NONE" || argOPT == "None") {
+          opt = NONE;
+        } else {  //Default: RANDOM
+          opt = RANDOM2;
         }
       } else {
         print_usage();
@@ -208,31 +243,64 @@ int main(int argc, char * argv []) {
   cout << "Tag size:\t" << tam_tag << endl;
 */  cout << endl;
 
-  /* Print Statistics */
-  string line_str =  "--------------------------------------------";
-  string line_str0 = "____________________________________________";
-  cout << line_str << endl;
-  cout << "Cache parameters:" << endl;
-  cout << line_str << endl;
-  cout << "Cache Size (KB):\t\t" << tam_cache_kb << endl;
-  cout << "Cache Associativity:\t\t" << n_way << endl;
-  cout << "Cache Block Size (bytes):\t" << tam_bloque_b << endl;
-  cout << line_str << endl;
-  cout << "Simulation results:" << endl;
-  cout << line_str << endl;
-  cout << "CPU time (cycles):\t\t" << cpu_time << endl;
-  cout << "AMAT (cycles):\t\t\t" << amat << endl;
-  cout << "Overall miss rate:\t\t" << overall_miss_rate << endl;
-  cout << "Read miss rate:\t\t\t" << read_miss_rate << endl;
-  cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
-  cout << "Load misses:\t\t\t" << load_misses << endl;
-  cout << "Store misses:\t\t\t" << store_misses << endl;
-  cout << "Total misses:\t\t\t" << total_misses << endl;
-  cout << "Load hits:\t\t\t" << load_hits << endl;
-  cout << "Store hits:\t\t\t" << store_hits << endl;
-  cout << "Total hits:\t\t\t" << total_hits << endl;
-  cout << line_str << endl << endl;
-
+  if(opt == L2){
+    /* Print Statistics */
+    cout << line_str << endl;
+    cout << "Cache parameters:" << endl;
+    cout << line_str << endl;
+    cout << "L1 Cache Size (KB):\t\t" << tam_cache_kb << endl;
+    cout << "L2 Cache Size (KB):\t\t" << tam_cache_kb << endl;
+    cout << "Cache L1 Associativity:\t\t" << n_way << endl;
+    cout << "Cache L2 Associativity:\t\t" << n_way << endl;
+    cout << "Cache Block Size (bytes):\t" << tam_bloque_b << endl;
+    cout << line_str << endl;
+    cout << "Simulation results:" << endl;
+    cout << line_str << endl;
+    cout << "Overall miss rate:\t\t" << overall_miss_rate << endl;
+    cout << "L1 miss rate:\t\t\t" << read_miss_rate << endl;
+    cout << "L2 miss rate:\t\t\t" << read_miss_rate << endl;
+    cout << "Global miss rate:\t\t" << read_miss_rate << endl;
+    cout << "Misses (L1):\t\t\t" << load_misses << endl;
+    cout << "Hits (L1):\t\t\t" << load_misses << endl;
+    cout << "Misses (L2):\t\t\t" << load_misses << endl;
+    cout << "Hits (L1):\t\t\t" << load_misses << endl;
+    cout << "Dirty Evictions (L2):\t\t" << dirty_evictions << endl;
+    cout << line_str << endl << endl;
+  } else if (opt == VC){
+    cout << line_str << endl;
+    cout << "Cache parameters:" << endl;
+    cout << line_str << endl;
+    cout << "L1 Cache Size (KB):\t\t" << tam_cache_kb << endl;
+    cout << "Cache L1 Associativity:\t\t" << n_way << endl;
+    cout << "Cache Block Size (bytes):\t" << tam_bloque_b << endl;
+    cout << line_str << endl;
+    cout << "Simulation results:" << endl;
+    cout << line_str << endl;
+    cout << "Miss rate (L1 + VC):\t\t" << cpu_time << endl;
+    cout << "Misses (L1 + VC):\t\t" << amat << endl;
+    cout << "Hits (L1 + VC):\t\t\t" << overall_miss_rate << endl;
+    cout << "Victim cache hits:\t\t" << read_miss_rate << endl;
+    cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
+    cout << line_str << endl << endl;
+  } else if (opt == NONE){
+    cout << line_str << endl;
+    cout << "Cache parameters:" << endl;
+    cout << line_str << endl;
+    cout << "L1 Cache Size (KB):\t\t" << tam_cache_kb << endl;
+    cout << "Cache L1 Associativity:\t\t" << n_way << endl;
+    cout << "Cache Block Size (bytes):\t" << tam_bloque_b << endl;
+    cout << line_str << endl;
+    cout << "Simulation results:" << endl;
+    cout << line_str << endl;
+    cout << "Miss rate (L1):\t\t\t" << cpu_time << endl;
+    cout << "Misses (L1):\t\t\t" << amat << endl;
+    cout << "Hits (L1):\t\t\t" << overall_miss_rate << endl;
+    cout << "Victim cache hits:\t\t" << read_miss_rate << endl;
+    cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
+    cout << line_str << endl << endl;
+  } else {
+    opt = RANDOM2;
+  }
 
 return 0;
 }
