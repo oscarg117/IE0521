@@ -30,8 +30,7 @@ enum replacement_policy{
 enum cache_optimization{
   VC,
   L2,
-  NONE,
-  RANDOM2
+  NONE
 };
 
 enum miss_hit_status {

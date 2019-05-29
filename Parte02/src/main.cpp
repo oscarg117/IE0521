@@ -14,7 +14,7 @@ using namespace std;
 /* Helper funtions */
 void print_usage ()
 {
-  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <n_way> -rp <PR> -opt <OPT>" << endl;
+  cerr << "Uso: " << "cache" << " -t <Tamaño Cache (kB)> -l <Tamaño Bloque (B)> -a <n_way> -opt <OPT>" << endl;
   exit (0);
 }
 
@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& out, const replacement_policy value){
         PROCESS_VAL(LRU);
         PROCESS_VAL(NRU);
         PROCESS_VAL(RRIP);
-        PROCESS_VAL(RANDOM2);
+        PROCESS_VAL(RANDOM);
     }
 #undef PROCESS_VAL
 
@@ -40,7 +40,6 @@ std::ostream& operator<<(std::ostream& out, const cache_optimization value){
         PROCESS_VAL(VC);
         PROCESS_VAL(L2);
         PROCESS_VAL(NONE);
-        PROCESS_VAL(RANDOM2);
     }
 #undef PROCESS_VAL
 
@@ -54,8 +53,7 @@ int main(int argc, char * argv []) {
   int tam_cache_kb = 0;
   int tam_bloque_b = 0;
   int n_way = 0;
-  replacement_policy rp = RANDOM;
-  cache_optimization opt = RANDOM2;
+  cache_optimization opt = RANDOM;
   /* From functions */
   int tam_tag = 0;
   int tam_idx = 0;
@@ -106,33 +104,16 @@ int main(int argc, char * argv []) {
         print_usage();
       }
     }
-    if (arg == "-rp") {
-      if(i + 1 < argc){
-        string argRP = argv[i+1];
-        //Assigns replacement policy
-        if (argRP == "LRU" || argRP == "lru") {
-          rp = LRU;
-        } else if (argRP == "RRIP" || argRP == "rrip") {
-          rp = RRIP;
-        } else {  //Default: RANDOM
-          rp = RANDOM;
-        }
-      } else {
-        print_usage();
-      }
-    }
     if (arg == "-opt") {
       if(i + 1 < argc){
         string argOPT = argv[i+1];
-        //Assigns replacement policy
+        //Assigns cache optimization
         if (argOPT == "VC" || argOPT == "vc") {
           opt = VC;
         } else if (argOPT == "L2" || argOPT == "l2") {
           opt = L2;
-        } else if (argOPT == "NONE" || argOPT == "None") {
+        } else {  //Default: NONE
           opt = NONE;
-        } else {  //Default: RANDOM
-          opt = RANDOM2;
         }
       } else {
         print_usage();
@@ -140,20 +121,13 @@ int main(int argc, char * argv []) {
     }
   }
   // Checks if all parameters are assigned
-  if(tam_cache_kb <= 0 || tam_bloque_b <= 0 || n_way <= 0 || rp == RANDOM){
+  if(tam_cache_kb <= 0 || tam_bloque_b <= 0 || n_way <= 0){
     print_usage();
   }
   // Getting tag, index and offset sizes
   field_size_get( tam_cache_kb, n_way, tam_bloque_b,
                   &tam_tag, &tam_idx, &tam_offset);
 
-
-  int srrip_value; // 2^m
-  if(n_way <= 2){
-      srrip_value = 1<<1; // 2^1
-  } else {
-      srrip_value = 1<<2; // 2^2
-  }
 
   //Cache instance
   int n_blocks = 1<<tam_idx;
@@ -162,7 +136,6 @@ int main(int argc, char * argv []) {
       for (int j = 0; j < n_way; j++){
           cache[i][j].valid = false;
           cache[i][j].dirty = false;
-          //cache[i][j].rp_value = srrip_value - 1;
           cache[i][j].rp_value = n_way - 1;
       }
   }
@@ -299,7 +272,7 @@ int main(int argc, char * argv []) {
     cout << "Dirty Evictions:\t\t" << dirty_evictions << endl;
     cout << line_str << endl << endl;
   } else {
-    opt = RANDOM2;
+    cout << "Nunca debería llegar aquí." << endl << endl;
   }
 
 return 0;
