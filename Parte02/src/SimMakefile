@@ -1,0 +1,46 @@
+#Makefile para la compilación del simulador de Cache
+CC = g++
+CFLAGS = -o
+SOURCE = main.cpp L1cache.cpp debug_utilities.cpp
+OBJ = $(SOURCE:.cpp = .o)
+TARGET = cache
+#Argumentos
+TCACHE = 32
+TBLOQUE = 64
+ASOC4 = 8
+ASOC2 = 2
+ASOC1 = 1
+RP1 = RRIP
+#RP2 = RRIP
+RP2 = LRU
+
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $(TARGET) $(OBJ)
+
+run:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+
+run1:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+
+run2:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+
+run4:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+
+run0:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run01:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run02:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+run04:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
+
+clean:
+	rm -f $(TARGET) ./*.o ./*.gch

@@ -27,13 +27,6 @@ enum replacement_policy{
   RANDOM
 };
 
-enum cache_optimization{
-  VC,
-  L2,
-  NONE,
-  RANDOM2
-};
-
 enum miss_hit_status {
  MISS_LOAD,
  MISS_STORE,
