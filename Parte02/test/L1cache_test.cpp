@@ -281,6 +281,93 @@ TEST(L1cache, boundaries){
 
 }
 
+
+/*
+ * TEST6: L1 miss & L2 miss
+ * 1. Choose a random associativity
+ * 2. Choose a random address (AddressA)
+ * 3. Fill a L1 cache line with random addresses, making sure AddressA is not added
+ * 4. Fill a L2 cache line with random addresses, making sure AddressA is not added
+ * 5. Read or Write (choose the operation randomly) AddressA.
+ * 6. Check operation in L1 is a miss
+ * 7. Check operation in L2 is a miss
+ * 8. Check miss_hit_status == HIT_READ
+ * 9. Force a hit store
+ * 10. miss_hit_status == HIT_STORE
+ */
+TEST(L1cache, L1_miss_L2_miss){
+  int status;
+  int i;
+  int idx;
+  int tag;
+  int associativity;
+  enum miss_hit_status expected_miss_hit;
+  bool loadstore = 1;
+  bool debug = 0;
+  struct operation_result result = {};
+
+  /* Fill a random cache entry */
+  idx = rand()%1024;
+  tag = rand()%4096;
+  associativity = 1 << (rand()%4);
+  if (debug_on) {
+    printf("Entry Info\n idx: %d\n tag: %d\n associativity: %d\n",
+          idx,
+          tag,
+          associativity);
+  }
+
+  struct entry cache_line[associativity];
+  /* Check for a miss */
+  DEBUG(Checking miss operation);
+  for (i = 0 ; i < 2; i++){
+    /* Fill cache line */
+    for ( i =  0; i < associativity; i++) {
+      cache_line[i].valid = true;
+      cache_line[i].tag = rand()%4096;
+      cache_line[i].dirty = 0;
+      cache_line[i].rp_value = (associativity <= 2)? rand()%associativity: 3;
+      while (cache_line[i].tag == tag) {
+        cache_line[i].tag = rand()%4096;
+      }
+    }
+    loadstore = (bool)i;
+    status = srrip_replacement_policy(idx,
+                                     tag,
+                                     associativity,
+                                     loadstore,
+                                     cache_line,
+                                     &result,
+                                     bool(debug_on));
+    EXPECT_EQ(status, 0);
+    EXPECT_EQ(result.dirty_eviction, 0);
+    expected_miss_hit = loadstore ? MISS_STORE: MISS_LOAD;
+    EXPECT_EQ(result.miss_hit, expected_miss_hit);
+  }
+  /*
+   * Check for hit: block was replaced in last iteration, if we used the same
+   * tag now we will get a hit
+   */
+  DEBUG(Checking hit operation);
+  for (i = 0 ; i < 2; i++){
+    loadstore = (bool)i;
+    status = srrip_replacement_policy(idx,
+                                     tag,
+                                     associativity,
+                                     loadstore,
+                                     cache_line,
+                                     &result,
+                                     (bool)debug_on);
+    EXPECT_EQ(status, 0);
+    EXPECT_EQ(result.dirty_eviction, 0);
+    expected_miss_hit = loadstore ? HIT_STORE: HIT_LOAD;
+    EXPECT_EQ(result.miss_hit, expected_miss_hit);
+  }
+
+}
+
+
+
 /*
  * Gtest main function: Generates random seed, if not provided,
  * parses DEBUG flag, and execute the test suite
