@@ -5,42 +5,40 @@ SOURCE = main.cpp L1cache.cpp debug_utilities.cpp
 OBJ = $(SOURCE:.cpp = .o)
 TARGET = cache
 #Argumentos
-TCACHE = 32
-TBLOQUE = 64
+TCACHE = 16
+TBLOQUE = 32
 ASOC4 = 8
 ASOC2 = 2
 ASOC1 = 1
 RP1 = RRIP
 #RP2 = RRIP
 RP2 = LRU
+L2 = l2
+VC = vc
+NONE = none
 
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(TARGET) $(OBJ)
 
+runL2:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(L2)
+
+runVC:
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(VC)
+
 run:
-	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(NONE)
 
-run1:
-	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+arunL2:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(L2)
 
-run2:
-	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+arunVC:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(VC)
 
-run4:
-	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP2)
+arun:
+	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -opt $(NONE)
 
-run0:
-	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
-
-run01:
-	gunzip -c mcf.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
-
-run02:
-	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC4) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
-
-run04:
-	gunzip -c art.trace.gz | ./$(TARGET) -a $(ASOC2) -t $(TCACHE) -l $(TBLOQUE) -rp $(RP1)
 
 clean:
 	rm -f $(TARGET) ./*.o ./*.gch
