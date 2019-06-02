@@ -33,6 +33,23 @@ int field_size_get( int cachesize_kb,
   return OK;
 }
 
+
+int field_size_get_VC(
+                      int associativity,
+                      int blocksize_bytes,
+                      int *tag_size,
+                      int *idx_size,
+                      int *offset_size)
+{
+
+
+  *idx_size = int(log2(16));
+  *offset_size = int(log2(blocksize_bytes));
+  *tag_size = ADDRSIZE - *offset_size;
+
+  return OK;
+}
+
 void address_tag_idx_get(long address,
                         int tag_size,
                         int idx_size,

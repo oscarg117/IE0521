@@ -54,6 +54,8 @@ int main(int argc, char * argv []) {
   int n_way_L1 = 0;
   int tam_cache_kb_L2 = 0;
   int n_way_L2 = 0;
+  int tam_cache_kb_VC = 0;
+  int n_way_VC = 0;
   int tam_bloque_b = 0;
 
   cache_optimization opt = NONE;
@@ -64,6 +66,9 @@ int main(int argc, char * argv []) {
   int tam_tag_L2 = 0;
   int tam_idx_L2 = 0;
   int tam_offset_L2 = 0;
+  int tam_tag_VC = 0;
+  int tam_idx_VC = 0;
+  int tam_offset_VC = 0;
   /* From simulation */
   double miss_rate_global = 0;
   double miss_rate_L1 = 0;
@@ -111,6 +116,7 @@ int main(int argc, char * argv []) {
       if(i + 1 < argc){
         n_way_L1 = stoi(argv[i+1]);
         n_way_L2 = 2 * n_way_L1;
+        n_way_VC = n_way_L1;
       } else {
         print_usage();
       }
@@ -135,6 +141,7 @@ int main(int argc, char * argv []) {
   if(tam_cache_kb_L1 <= 0 || tam_bloque_b <= 0 || n_way_L1 <= 0){
     print_usage();
   }
+
   // Getting L1 tag, index and offset sizes
   field_size_get( tam_cache_kb_L1, n_way_L1, tam_bloque_b,
                   &tam_tag_L1, &tam_idx_L1, &tam_offset_L1);
@@ -143,6 +150,12 @@ int main(int argc, char * argv []) {
   field_size_get( tam_cache_kb_L2, n_way_L2, tam_bloque_b,
                   &tam_tag_L2, &tam_idx_L2, &tam_offset_L2);
 
+
+
+  tam_cache_kb_VC = 16*tam_bloque_b*n_way_VC;
+  // Getting VC tag, index adn offset sizes
+  field_size_get_VC(n_way_VC, tam_bloque_b,
+                  &tam_tag_VC, &tam_idx_VC, &tam_offset_VC);
 
   //Cache instances
   //L1
@@ -166,14 +179,27 @@ int main(int argc, char * argv []) {
       }
   }
 
+  n_blocks = 1<<tam_idx_VC;
+  entry cache_VC[n_blocks][n_way_VC];
+  for (int i = 0; i < n_blocks; i++){
+      for (int j = 0; j < n_way_VC; j++){
+          cache_VC[i][j].valid = false;
+          cache_VC[i][j].dirty = false;
+          cache_VC[i][j].rp_value = n_way_VC - 1;
+      }
+  }
+
   /* Get trace's lines and start your simulation */
   string ctrl = "#";
   bool op;
   int ic = 0;
   long long address;
-  int index_L1, tag_L1, index_L2, tag_L2;
-  operation_result op_result_L1, op_result_L2;
+  int index_L1, tag_L1, index_L2, tag_L2, index_VC, tag_VC;
+  operation_result op_result_L1, op_result_L2, op_result_VC;
 
+cout<<index_L1<<"-> index_L1"<<endl;
+cout<<index_VC<<"-> index_VC"<<endl;
+cout<<index_L2<<"-> index_L2"<<endl;
 
   /* Print cache configuration */
 
@@ -263,7 +289,65 @@ int main(int argc, char * argv []) {
 
   } else if (opt == VC){
     // L1 + Victim Cache
+    //Start simulation
 
+    while (ctrl == "#") {
+      ctrl = "N";
+      cin >> ctrl;
+      cin >> op;
+      cin >> hex >> address;
+      cin >> dec >> ic;
+
+      //Gets tag and index from address
+      address_tag_idx_get(address, tam_tag_L1, tam_idx_L1, tam_offset_L1,
+                          &index_L1, &tag_L1);
+
+//cout<<index_L1<<"-> index_L1"<<endl;
+      //Se busca dato en L1
+      lru_replacement_policy(  index_L1, tag_L1,  n_way_L1, op,
+                                   cache_L1[index_L1], &op_result_L1);
+
+      if(op_result_L1.miss_hit == HIT_STORE || op_result_L1.miss_hit == HIT_LOAD){
+        // L1 Hit
+        hits_L1++;
+      } else {
+        // L1 Miss
+        misses_L1++;
+
+
+        //Gets tag and index from address
+        address_tag_idx_get(address, tam_tag_VC, tam_idx_VC, tam_offset_VC,
+                            &index_VC, &tag_VC);
+
+
+        //Se busca dato en VC
+        lru_replacement_policy(16,tag_VC,n_way_VC, op,
+                                     cache_VC[16], &op_result_VC);
+
+        if(op_result_VC.miss_hit == HIT_STORE || op_result_VC.miss_hit == HIT_LOAD){
+          // VC Hit
+          hits_vc++;
+
+        } else {
+          // VC Miss
+          misses_L1vc++;
+
+        }
+
+        if(op_result_VC.dirty_eviction){
+            dirty_evictions++;
+        }
+      }
+
+      //if(cpu_time > 1000){break;}
+    }//End while
+
+    //Get cache simulation stats
+    miss_rate_L1 = double(misses_L1) / double(misses_L1 + hits_L1);
+    miss_rate_L1vc = miss_rate_L2 + (double(misses_L1vc
+    )/ double(misses_L1vc + hits_vc));
+    misses_L1vc = misses_L1 + misses_L1vc;
+    hits_L1vc = hits_L1 + hits_vc;
 
 
 
